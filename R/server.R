@@ -5,7 +5,6 @@
 # Find out more about building applications with Shiny here:
 #
 #    http://shiny.rstudio.com/
-#
 
 # ------- Loading Packages ---------
 library(shiny)
@@ -16,7 +15,6 @@ library(lubridate)
 library(plotly)
 library(tidyquant)
 library(gtrendsR)
-
 
 # --------- Google Trends API ---------
 # --------- Search Terms ---------
@@ -33,10 +31,12 @@ Read_Search_terms <- search_trems %>%
 Read_Search_terms %>% names()
 
 # ------ Interest over time -------
-Interest_over_time <- Read_Search_terms %>%
+Interest_over_time_data <- Read_Search_terms %>%
   purrr::pluck("interest_over_time") %>%
   dplyr::mutate(hits = as.numeric(hits)) %>%
-  tibble::as_tibble() %>%
+  tibble::as_tibble()
+
+Interest_over_time_plot <- Interest_over_time_data %>%
   ggplot2::ggplot(aes(date, hits)) +
   ggplot2::geom_line() +
   tidyquant::theme_tq() +
@@ -53,10 +53,12 @@ world_df <- ggplot2::map_data('world') %>%
   tibble::as_tibble() %>%
   dplyr::mutate(region = stringr::str_to_title(region))
 
-Country_trend <- Read_Search_terms %>%
+Country_trend_data <- Read_Search_terms %>%
   purrr::pluck("interest_by_country") %>%
   dplyr::left_join(world_df, by = c("location" = "region")) %>%
-  tibble::as_tibble() %>%
+  tibble::as_tibble()
+
+Country_trend_plot <- Country_trend_data %>%
   ggplot2::ggplot(aes(long, lat, group = group)) +
   ggplot2::geom_polygon(aes(fill = hits))+
   ggplot2::scale_fill_viridis_c() +
@@ -65,11 +67,13 @@ Country_trend <- Read_Search_terms %>%
   ggplot2::labs(title = "Keyword Trends")
 
 # -------- Related_queries -------------
-related_queries <- Read_Search_terms %>%
+related_queries_data <- Read_Search_terms %>%
   purrr::pluck("related_queries") %>%
   tibble::as_tibble() %>%
   dplyr::filter(related_queries == "top") %>%
-  dplyr::mutate(interest = as.numeric(subject)) %>%
+  dplyr::mutate(interest = as.numeric(subject))
+
+related_queries_plot <- related_queries_data %>%
   ggplot2::ggplot(aes(value, interest, color = keyword)) +
   ggplot2::geom_segment(aes(xend = value, yend = 0)) +
   ggplot2::geom_point() +
@@ -79,17 +83,32 @@ related_queries <- Read_Search_terms %>%
 # ------ Server -------
 server <- function(input, output) {
   # ------ Render Interest over time plot -------
-  output$plot <- renderPlotly({
-    plotly::ggplotly(Interest_over_time)
+  output$plot <- plotly::renderPlotly({
+    plotly::ggplotly(Interest_over_time_plot)
   })
   
-  # ------ Render Interest by Country plot -------
-  output$world_map_plot <- renderPlotly({
-    plotly::ggplotly(Country_trend)
+  # ------ Render Country plot -------
+  output$world_map_plot <- plotly::renderPlotly({
+    plotly::ggplotly(Country_trend_plot)
   })
   
-  # ------ Render Interest by Related queries plot -------
-  output$related_queries_plot <- renderPlotly({
-    plotly::ggplotly(related_queries)
+  # ------ Render Related queries plot -------
+  output$related_queries_plot <- plotly::renderPlotly({
+    plotly::ggplotly(related_queries_plot)
+  })
+  
+  # ------ Render Interest over time data -------
+  output$interest_df <- shiny::renderDataTable({
+    Interest_over_time_data
+  })
+  
+  # ------ Render Country data -------
+  output$country_df <- shiny::renderDataTable({
+    Country_trend_data
+  })
+  
+  # ------ Render Related queries data -------
+  output$queries_df <- shiny::renderDataTable({
+    related_queries_data
   })
 }

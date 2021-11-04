@@ -19,30 +19,33 @@ header <- shinydashboard::dashboardHeader(title = "Work From Home Dashboard",
 # -------- dashboard side bar ----------
 sidebar <- shinydashboard::dashboardSidebar(
   sidebarMenu(
-    menuItem("Introduction", tabName = "introduction"),
-    menuItem("Visualization", tabName = "visualization"),
-    menuItem("Data", tabName = "data"),
+    menuItem("Introduction", 
+             tabName = "introduction"),
+    menuItem("Visualization", 
+             tabName = "visualization"),
+    menuItem("Data", 
+             tabName = "data",
+             menuSubItem("Interest over Time Data",
+                         tabName = "Interest_df"),
+             menuSubItem(text = "Country Trend Data", 
+                         tabName = "Country_df"),
+             menuSubItem(text = "Related Queries Data", 
+                         tabName = "Queries_df")),
     menuItem("Source", tabName = "source")
   )
 )
 
-# -------- dashboard body ----------
+# -------- das  board body ----------
 body <- shinydashboard::dashboardBody(
-  tags$head(tags$style(HTML('
-        .skin-blue .main-header .logo {
-          background-color: #3c8dbc;
-        }
-        .skin-blue .main-header .logo:hover {
-          background-color: #3c8dbc;
-        }
-      '))),
   shinydashboard::tabItems(
     shinydashboard::tabItem(
       "introduction", 
       p(
-        
+        shiny::titlePanel(title = "Work From Home Dashboard", )
       )
     ),
+    
+    # ------ visualization ----------
     shinydashboard::tabItem(
       "visualization",
       fluidRow(
@@ -58,9 +61,19 @@ body <- shinydashboard::dashboardBody(
         )
       )
     ),
+    
+    # ------ Data Tables --------
     shinydashboard::tabItem(
-      "data", 
-      # fluid
+      "Interest_df",
+      shiny::dataTableOutput("interest_df")
+    ),
+    shinydashboard::tabItem(
+      "Country_df",
+      shiny::dataTableOutput("country_df")
+    ),
+    shinydashboard::tabItem(
+      "Queries_df",
+      shiny::dataTableOutput("queries_df")
     ),
     shinydashboard::tabItem(
       "source"
